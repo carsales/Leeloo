@@ -9,13 +9,12 @@ open Fake.AssemblyInfoFile
 
 let buildDir = "./build"
 let workDir = "./work"
-let version = "0.1.0"
-
-let dependencies = getDependencies "Fake.Multitargeting/packages.config"
+let internalPackagePath = workDir @@ "tools"
+let version = "0.1.2"
 
 Target "Clean" (fun _ -> 
     trace "Running clean"
-    CleanDirs [ buildDir ; workDir ; workDir @@ "lib" ])
+    CleanDirs [ buildDir ; workDir ; internalPackagePath ])
 
 Target "Build" (fun _ ->
     [ Attribute.Version version ; Attribute.FileVersion version ]
@@ -28,12 +27,12 @@ Target "Build" (fun _ ->
 Target "Nuget" (fun _ ->
     trace "Building package"
 
-    buildDir @@ "Fake.Multitargeting.dll" |> CopyFile (workDir @@ "lib")
+    !! (buildDir @@ "*.*")
+    |> CopyFiles internalPackagePath
 
     "Fake.Multitargeting.nuspec" |> NuGet (fun p ->
         { p with Project = "Fake.Multitargeting"
                  Version = version
-                 Dependencies = dependencies 
                  WorkingDir = workDir
                  OutputPath = "./"
                  ToolPath = "./packages/NuGet.CommandLine.2.8.3/tools/Nuget.exe" }))
