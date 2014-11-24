@@ -1,4 +1,4 @@
-﻿namespace Fake.Multitargeting
+﻿namespace Leeloo
     
 type PackageInfo = {
     Name: string

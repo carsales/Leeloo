@@ -1,4 +1,4 @@
-﻿namespace Fake.Multitargeting
+﻿namespace Leeloo
 
 module FsFs =
     open System.IO

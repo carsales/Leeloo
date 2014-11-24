@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fake.Multitargeting", "Fake.Multitargeting\Fake.Multitargeting.fsproj", "{19AB6F5A-34BE-48D5-93D1-43D63548CF0C}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Leeloo", "Leeloo\Leeloo.fsproj", "{19AB6F5A-34BE-48D5-93D1-43D63548CF0C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{682144B4-D1C0-44DF-88A6-C59CE7D93E44}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,7 +12,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{682144
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{361DA3E5-7FED-45CE-81B2-AE1F4674275E}"
 	ProjectSection(SolutionItems) = preProject
-		Fake.Multitargeting.nuspec = Fake.Multitargeting.nuspec
+		build.cmd = build.cmd
+		Leeloo.nuspec = Leeloo.nuspec
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ClientFiles", "ClientFiles", "{FD08E65C-1B07-405B-A400-3489DFCAAFE3}"
+	ProjectSection(SolutionItems) = preProject
+		ClientInstallFiles\Init.ps1 = ClientInstallFiles\Init.ps1
+		ClientInstallFiles\sample.nuspec.txt = ClientInstallFiles\sample.nuspec.txt
+		ClientInstallFiles\SampleBuild.cmd = ClientInstallFiles\SampleBuild.cmd
+		ClientInstallFiles\SampleBuild.fsx = ClientInstallFiles\SampleBuild.fsx
 	EndProjectSection
 EndProject
 Global

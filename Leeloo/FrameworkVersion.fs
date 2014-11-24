@@ -1,4 +1,4 @@
-﻿namespace Fake.Multitargeting
+﻿namespace Leeloo
         
 type FrameworkVersion = V2 | V35 | V4 | V45 | V451
     with 

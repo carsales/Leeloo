@@ -1,8 +1,8 @@
-﻿namespace Fake.Multitargeting
+﻿namespace Leeloo
 
 module Multitargeting =
     open Fake
-    open Fake.Multitargeting
+    open Leeloo
     open FsFs
     open System.IO
     open System.Text.RegularExpressions

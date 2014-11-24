@@ -9,33 +9,49 @@ open Fake.AssemblyInfoFile
 
 let buildDir = "./build"
 let workDir = "./work"
-let internalPackagePath = workDir @@ "tools"
-let version = "0.1.2"
+let srcDir = "Leeloo"
+let toolsPath = workDir @@ "tools"
+let version = "0.2.0"
+
+let writeFileWithReplace (mutator: string -> string) (outputFile: string) (inputFilePath: string) =
+    let content = System.IO.File.ReadAllText inputFilePath
+    let mutated = mutator content
+    System.IO.File.WriteAllText(outputFile, mutated)
+let versionReplacer (s: string) = s.Replace("{{Version}}", version)
+let replaceVersionForToolFile (toolFileName: string) = toolsPath @@ toolFileName |> writeFileWithReplace versionReplacer 
 
 Target "Clean" (fun _ -> 
     trace "Running clean"
-    CleanDirs [ buildDir ; workDir ; internalPackagePath ])
+    CleanDirs [ buildDir ; workDir ; toolsPath ])
 
 Target "Build" (fun _ ->
     [ Attribute.Version version ; Attribute.FileVersion version ]
-    |> AssemblyInfoFile.CreateFSharpAssemblyInfo "./Fake.Multitargeting/AssemblyInfo.fs" 
+    |> AssemblyInfoFile.CreateFSharpAssemblyInfo (srcDir @@ "AssemblyInfo.fs")
 
-    !! "./Fake.Multitargeting/Fake.Multitargeting.fsproj"
+    !! (srcDir @@ "Leeloo.fsproj")
     |> MSBuildRelease buildDir "Build"
     |> Log "Building: ") 
 
 Target "Nuget" (fun _ ->
     trace "Building package"
 
-    !! (buildDir @@ "*.*")
-    |> CopyFiles internalPackagePath
+    !! ("packages/Fake.*/tools/*") 
+    |> CopyFiles toolsPath
 
-    "Fake.Multitargeting.nuspec" |> NuGet (fun p ->
-        { p with Project = "Fake.Multitargeting"
-                 Version = version
+    !! (buildDir @@ "*.*")
+    |> CopyFiles toolsPath
+    
+    "ClientInstallFiles" @@ "Init.ps1"          |> CopyFile toolsPath
+    "ClientInstallFiles" @@ "sample.nuspec.txt" |> CopyFile toolsPath
+    "ClientInstallFiles" @@ "SampleBuild.fsx"   |> replaceVersionForToolFile "build.fsx"
+    "ClientInstallFiles" @@ "SampleBuild.cmd"   |> replaceVersionForToolFile "Build.cmd"
+
+    "Leeloo.nuspec" |> NuGet (fun p ->
+        { p with Project    = "Leeloo"
+                 Version    = version
                  WorkingDir = workDir
                  OutputPath = "./"
-                 ToolPath = "./packages/NuGet.CommandLine.2.8.3/tools/Nuget.exe" }))
+                 ToolPath   = "./packages/NuGet.CommandLine.2.8.3/tools/Nuget.exe" }))
 
 Target "Default" (fun _ ->
     trace "Packaging done") 
