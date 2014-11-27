@@ -10,8 +10,12 @@ open Fake.AssemblyInfoFile
 let buildDir = "./build"
 let workDir = "./work"
 let srcDir = "Leeloo"
+let outputPath = "nupkgs"
 let toolsPath = workDir @@ "tools"
-let version = "0.2.0"
+let version = "0.9.4"
+
+//let deployPath = "."
+let deployPath = @"\\dev-web-01\Websites\nuget\Packages"
 
 let writeFileWithReplace (mutator: string -> string) (outputFile: string) (inputFilePath: string) =
     let content = System.IO.File.ReadAllText inputFilePath
@@ -22,7 +26,7 @@ let replaceVersionForToolFile (toolFileName: string) = toolsPath @@ toolFileName
 
 Target "Clean" (fun _ -> 
     trace "Running clean"
-    CleanDirs [ buildDir ; workDir ; toolsPath ])
+    CleanDirs [ buildDir ; workDir ; toolsPath ; outputPath ])
 
 Target "Build" (fun _ ->
     [ Attribute.Version version ; Attribute.FileVersion version ]
@@ -38,6 +42,9 @@ Target "Nuget" (fun _ ->
     !! ("packages/Fake.*/tools/*") 
     |> CopyFiles toolsPath
 
+    !! ("packages/NuGet.CommandLine.*/tools/*") 
+    |> CopyFiles toolsPath
+
     !! (buildDir @@ "*.*")
     |> CopyFiles toolsPath
     
@@ -50,8 +57,12 @@ Target "Nuget" (fun _ ->
         { p with Project    = "Leeloo"
                  Version    = version
                  WorkingDir = workDir
-                 OutputPath = "./"
+                 OutputPath = outputPath
                  ToolPath   = "./packages/NuGet.CommandLine.2.8.3/tools/Nuget.exe" }))
+
+Target "Deploy" (fun _ ->
+    !! (outputPath @@ "Leeloo." + version + ".*")
+    |> CopyFiles deployPath)
 
 Target "Default" (fun _ ->
     trace "Packaging done") 
@@ -59,6 +70,7 @@ Target "Default" (fun _ ->
 "Clean" 
 ==> "Build"
 ==> "Nuget"
+==> "Deploy"
 ==> "Default"
 
 RunTargetOrDefault "Default"

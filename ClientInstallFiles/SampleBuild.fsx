@@ -1,23 +1,24 @@
 #if INTERACTIVE
-System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
+System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__ + "\.."
 #endif
 
-#r "packages/Fake.Multitargeting.{{Version}}/tools/FakeLib.dll"
-#r "packages/Fake.Multitargeting.{{Version}}/tools/Fake.Multitargeting.dll"
+#r "packages/Leeloo.{{Version}}/tools/FakeLib.dll"
+#r "packages/Leeloo.{{Version}}/tools/Leeloo.dll"
 
 open Fake
 open Fake.AssemblyInfoFile
-open Fake.Multitargeting
+open Leeloo
 
-let version = <Nuget version and SolutionInfo version>
-let interfaceProjectName = <Your base "interface" project name>
+new System.Exception("Edit build.fsx to remove this line and configure your specifics") |> raise
+let version = "<Nuget version and SolutionInfo version>"
+let interfaceProjectName = "<Your base *interface* project name>"
 
 let buildFrameworks = [ V35 ; V451 ]
 
 let testDir = "./test/"
 
-let buildDir = Multitargeting.Defaults.buildPath
-let srcDir = Multitargeting.Defaults.sourcesPath
+let buildDir = Multipass.Defaults.buildPath
+let srcDir = Multipass.Defaults.sourcesPath
 
 let nuspecFileBase = "sample.nuspec"
 
@@ -30,10 +31,10 @@ let shouldBuildForFramework (version: FrameworkVersion) (project: string) =
     match project, version with
     | _ -> true
 
-let nugetableProjects = interfaceProjectName |> Multitargeting.nugetableProjects id
+let nugetableProjects = interfaceProjectName |> Multipass.nugetableProjects id
 
 Target "Clean" (fun _ -> 
-    Multitargeting.artefactDirectories @ [ testDir ]
+    Multipass.artefactDirectories @ [ testDir ]
     |> List.iter CleanDir)
 
 Target "UpdateSolutionInfo" (fun _ -> 
@@ -42,7 +43,7 @@ Target "UpdateSolutionInfo" (fun _ ->
         [ Attribute.Version version; Attribute.FileVersion version ])
 
 Target "Build" (fun _ -> 
-    nugetableProjects |> Multitargeting.buildForAllFrameworks (fun a -> 
+    nugetableProjects |> Multipass.buildForAllFrameworks (fun a -> 
         { a with ShouldBuildForFramework = shouldBuildForFramework
                  Frameworks = buildFrameworks }))
 
@@ -62,7 +63,7 @@ Target "Test" (fun _ ->
                                  OutputFile = testDir + "TestResults.xml" }))
 
 Target "Nuget" (fun _ -> 
-    let packageBuilder = Multitargeting.createNugetForProject (fun a -> 
+    let packageBuilder = Multipass.createNugetForProject (fun a -> 
         {a with FrameworksToBuild = buildFrameworks
                 NuspecTemplatePath = nuspecFileBase
                 ShouldBuildForFramework = shouldBuildForFramework

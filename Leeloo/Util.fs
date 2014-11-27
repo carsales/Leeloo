@@ -22,3 +22,7 @@ module Util =
         
     let flip f b a = f a b 
     let konst a _ = a
+                    
+    let (->>) f g a =
+        f a |> ignore
+        g a

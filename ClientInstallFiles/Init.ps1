@@ -6,34 +6,31 @@ Write-Host $package
 Write-Host $project
 
 $packageRoot = $installPath + "\..\..\"
+$leelooPath = $packageRoot + "\leeloo"
 
-$cmdDest = $packageRoot + "build.cmd"
-$fsxDest = $packageRoot + "build.fsx"
-$nuspecDest = $packageRoot + "sample.nuspec"
+if(!(Test-Path($leelooPath))) {
+	Write-Host "Creating " $leelooPath
 
-Write-Host "Testing if " + $cmdDest " or " + $fsxDest + " exist."
+	New-Item -ItemType directory -Path $leelooPath
 
-$cmdNeeded = !(Test-Path($cmdDest))
-$fsxNeeded = !(Test-Path($fsxDest))
+	$cmdDest    = $packageRoot + "build.cmd"      # This belongs in the root
 
-if($cmdNeeded -and $fsxNeeded) {
- 
-	Write-Host "Copying files"
+	$fsxDest    = $leelooPath  + "\build.fsx"
+	$nuspecDest = $leelooPath  + "\sample.nuspec"
+	$nugetDest  = $leelooPath  + "\nuget.exe"
 
-	$cmdPath = $toolsPath + "\build.cmd"
-	$fsxPath = $toolsPath + "\build.fsx"
+	Write-Host "Copying files " $cmdDest ", " $fsxDest ", and " $nuspecDest "."
+
+	$cmdPath    = $toolsPath + "\build.cmd"
+	$fsxPath    = $toolsPath + "\build.fsx"
 	$nuspecPath = $toolsPath + "\sample.nuspec.txt"
-
-	write-host $cmdPath
-	write-host $fsxPath
-
+		
 	Copy-Item $cmdPath $cmdDest
 	Copy-Item $fsxPath $fsxDest
 
-	if(!(Test-Path($nuspecDest))) {
-		Write-Host "Writing nuspec sample"
-		Copy-Item $nuspecPath $nuspecDest
-	}
-} else {
-	Write-Host "Files already exist"
+	Write-Host "Writing nuspec sample"
+	Copy-Item $nuspecPath $nuspecDest
+	
+	Write-Host "Downloading nuget.exe to " $nugetDest
+	Invoke-WebRequest "http://nuget.org/nuget.exe" -OutFile $nugetDest
 }

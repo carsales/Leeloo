@@ -1,6 +1,8 @@
 ﻿namespace Leeloo
 
-module Multitargeting =
+module Multipass =
+    open NuGet
+    open NuGet.Common
     open Fake
     open Leeloo
     open FsFs
@@ -11,9 +13,11 @@ module Multitargeting =
         let sourcesPath           = "./src"
         let installedPackagesPath = "./packages"
 
-        let buildPath             = "./build"
-        let packagingWorkPath     = "./work"
-        let packageOutputPath     = "./nupkgs"     
+        let buildPath             = "./leeloo/build"
+        let packagingWorkPath     = "./leeloo/work"
+        let packageOutputPath     = "./leeloo/nupkgs"
+
+        let nugetExePath          = "Nuget.exe"
 
         let frameworksToBuild = [V451]
 
@@ -114,12 +118,13 @@ module Multitargeting =
     type BuildForAllFrameworksArgs = 
         { ShouldBuildForFramework: FrameworkVersion -> string -> bool
         ; Frameworks: FrameworkVersion seq
+        ; NugetExePath: string
         ; BuildDir: string
         ; SourceDir: string
         ; PackagesDir: string}
     let defaultBuildForAllFrameworksArgs = 
         { BuildDir = Defaults.buildPath; PackagesDir = Defaults.installedPackagesPath; SourceDir = Defaults.sourcesPath
-        ; ShouldBuildForFramework = Defaults.shouldBuildForProject; Frameworks = Defaults.frameworksToBuild }
+        ; NugetExePath = Defaults.nugetExePath; ShouldBuildForFramework = Defaults.shouldBuildForProject; Frameworks = Defaults.frameworksToBuild }
     let buildForAllFrameworks (callback: BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs) nugetableProjects =
         let config = callback defaultBuildForAllFrameworksArgs
 
@@ -156,34 +161,28 @@ module Multitargeting =
 
                 File.WriteAllText(csproj, updatedContents)
 
-            let runNugetUpdate (projectName: string) =
-                let packageFile = "./packages.config"
-
-                Log "Updating nuget references from " [packageFile]
-
-                let commandArgs = [ "update"; packageFile
-                                  ; "-NonInteractive"; "-RepositoryPath"; config.PackagesDir] 
-                                  |> String.concat " "
-            
-                let args = 
-                    { Program = ".nuget/Nuget.exe"
-                      WorkingDirectory = config.BuildDir @@ projectName
-                      CommandLine = commandArgs
-                      Args = []}
-
-                Log "Running" [ args.ToString() ]
-
-                asyncShellExec args
+//            let runNugetUpdate (projectName: string) =
+//                
+//                let packageRepo = PackageRepositoryFactory.Default.CreateRepository "https://packages.nuget.org/api/v2"
+//                let packagePathResolver = new DefaultPackagePathResolver(config.PackagesDir)
+//                let projectSystem = new MSBuildProjectSystem(projectName @@ projectName + ".csproj") :> IProjectSystem
+//                let localRepo = PackageRepositoryFactory.Default.CreateRepository config.PackagesDir
+//                let projectManager = new ProjectManager(packageRepo, packagePathResolver, projectSystem, localRepo)
+//
+//                let bouncePackage = projectManager.RemovePackageReference ->> projectManager.AddPackageReference 
+//
+//                projectManager.LocalRepository.GetPackages()
+//                |> Seq.filter projectManager.IsInstalled 
+//                |> Seq.map (fun package -> printfn "Bouncing %s" package.Id ; package.Id)
+//                |> Seq.iter bouncePackage
 
             Log "Building for " [|framework.ToFrameworkVersionFlag|]
 
             nugetableProjects 
             |> Seq.iter setFrameworkVersionForProject
 
-            nugetableProjects
-            |> Seq.map runNugetUpdate
-            |> (Seq.toArray >> Async.Parallel >> Async.RunSynchronously)
-            |> ignore
+//            nugetableProjects
+//            |> Seq.iter runNugetUpdate
 
             nugetableProjects
             |> Seq.iter (fun projectName ->
