@@ -12,10 +12,10 @@ let workDir = "./work"
 let srcDir = "Leeloo"
 let outputPath = "nupkgs"
 let toolsPath = workDir @@ "tools"
-let version = "0.9.6"
+let version = "0.9.7"
 
-let deployPath = "."
-//let deployPath = @"\\dev-web-01\Websites\nuget\Packages"
+//let deployPath = "."
+let deployPath = @"\\dev-web-01\Websites\nuget\Packages"
 
 let writeFileWithReplace (mutator: string -> string) (outputFile: string) (inputFilePath: string) =
     let content = System.IO.File.ReadAllText inputFilePath

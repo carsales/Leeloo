@@ -16,7 +16,7 @@ module NugetHelper =
 
     let findReference (doc: XDocument) packageName =
         let includesPackageName (name: string) (elem: XElement) =
-            elem.Attribute(xn "Include").Value.Contains(name) 
+            elem.Attribute(xn "Include").Value.ToUpperInvariant().Contains(name.ToUpperInvariant()) 
         doc.Descendants(ns + "Reference").First(fun elem -> includesPackageName packageName elem)
                 
     let versionsAvailable (package: IPackage) = 
