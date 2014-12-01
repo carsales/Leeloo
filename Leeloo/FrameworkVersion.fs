@@ -2,8 +2,8 @@
         
 type FrameworkVersion = V2 | V35 | V4 | V45 | V451
     with 
-        static member VersionsBelow = 
-            function
+        member x.VersionsBelow = 
+            match x with
             | V2   -> [V2]
             | V35  -> [V2; V35]
             | V4   -> [V2; V35; V4]

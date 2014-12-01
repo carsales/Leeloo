@@ -1,30 +1,16 @@
 ﻿namespace Leeloo
 
 module Multipass =
-    open NuGet
-    open NuGet.Common
     open Fake
     open Leeloo
     open FsFs
     open System.IO
     open System.Text.RegularExpressions
-
-    module Defaults =
-        let sourcesPath           = "./src"
-        let installedPackagesPath = "./packages"
-
-        let buildPath             = "./leeloo/build"
-        let packagingWorkPath     = "./leeloo/work"
-        let packageOutputPath     = "./leeloo/nupkgs"
-
-        let nugetExePath          = "Nuget.exe"
-
-        let frameworksToBuild = [V451]
-
-        let isExcludedProject = konst false
-        let shouldBuildForProject _ _  = true
     
-    let artefactDirectories = [ Defaults.buildPath ; Defaults.packagingWorkPath ; Defaults.packageOutputPath ]
+    let artefactDirectories (paths: LeelooPaths) = [ 
+        paths.BuildPath
+        paths.PackagingWorkPath
+        paths.PackageOutputPath ]
 
     let packages packagesDir = 
         (Dirs.ofString packagesDir) <**> PackageInfo.FromDirectory 
@@ -32,21 +18,20 @@ module Multipass =
         |> Seq.filter (fun pi -> pi.Frameworks |> List.isEmpty |> not)
         |> Seq.toList
 
-    type NugetableProjectsArg = 
-        { IsExcludedProject : string -> bool
-        ; SourceDirectory: string }        
-    let defaultNugetableProjectsArg = { IsExcludedProject = Defaults.isExcludedProject; SourceDirectory = Defaults.sourcesPath}
-    let nugetableProjects (callback: NugetableProjectsArg -> NugetableProjectsArg) (interfaceProjectName: string) = 
+    type NugetableProjectsArg       = { IsExcludedProject : string -> bool }        
+    let defaultNugetableProjectsArg = { IsExcludedProject = LeelooDefaults.isExcludedProject; }
+
+    let nugetableProjects (paths: LeelooPaths) (callback: NugetableProjectsArg -> NugetableProjectsArg) (interfaceProjectName: string) = 
         let testProj (name: string) = name.Contains "Tests"
     
-        let config = callback defaultNugetableProjectsArg
+        let config = callback <| defaultNugetableProjectsArg
 
         let isChild (name: string) 
             = [testProj; config.IsExcludedProject] 
            |> Seq.map    (fun f -> not << f)
            |> Seq.forall (fun f -> f name)
 
-        let projectPattern = config.SourceDirectory @@ interfaceProjectName + ".*/"
+        let projectPattern = paths.SourcesPath @@ interfaceProjectName + ".*/"
 
         let projects = !! projectPattern
                        |> Seq.filter isChild   
@@ -62,23 +47,19 @@ module Multipass =
     type CreateNugetForProjectArgs = 
         { Version: string
         ; NuspecTemplatePath: string
-        ; PackagingWorkingDirectory: string
-        ; BuildDirectory: string
-        ; PackageOutputDirectory: string
         ; FrameworksToBuild: FrameworkVersion seq
         ; ShouldBuildForFramework: FrameworkVersion -> string -> bool
-        ; SpecialisedReferences: string -> (string * string) list
-        }
+        ; SpecialisedReferences: string -> (string * string) list }
     let defaultCreateNugetForProjectArgs =
-        { Version = ""; NuspecTemplatePath = ""
-        ; PackagingWorkingDirectory = Defaults.packagingWorkPath; BuildDirectory = Defaults.buildPath; PackageOutputDirectory = Defaults.packageOutputPath
+        { Version = "0.0.1"; NuspecTemplatePath = ""
         ; FrameworksToBuild = [V451]
-        ; ShouldBuildForFramework = (fun _ _ -> true)
+        ; ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
         ; SpecialisedReferences = konst [] }
-    let createNugetForProject (callback: CreateNugetForProjectArgs -> CreateNugetForProjectArgs) (name : string) = 
+
+    let createNugetForProject (paths: LeelooPaths) (callback: CreateNugetForProjectArgs -> CreateNugetForProjectArgs) (name : string) = 
         let config = callback defaultCreateNugetForProjectArgs
 
-        let workDir = config.PackagingWorkingDirectory @@ name
+        let workDir = paths.PackagingWorkPath @@ name
 
         CleanDir workDir
 
@@ -86,7 +67,7 @@ module Multipass =
         let nuspecFile = config.NuspecTemplatePath
 
         let dependencies = 
-            let fileName = "src" @@ name @@ "packages.config" 
+            let fileName = paths.BuildPath @@ name @@ "packages.config" 
 
             if fileExists fileName 
             then getDependencies fileName
@@ -102,8 +83,8 @@ module Multipass =
                 let frameworkVersionName = frameworkVersion.ToNugetPath
                 let outputDir = libDir @@ frameworkVersionName
 
-                !! (config.BuildDirectory @@ name @@ frameworkVersionName @@ name + ".dll") 
-                ++ (config.BuildDirectory @@ name @@ frameworkVersionName @@ name + ".pdb") 
+                !! (paths.BuildPath @@ name @@ frameworkVersionName @@ name + ".dll") 
+                ++ (paths.BuildPath @@ name @@ frameworkVersionName @@ name + ".pdb") 
                 |> CopyTo outputDir)
 
         nuspecFile |> NuGet (fun p -> 
@@ -111,26 +92,28 @@ module Multipass =
                                    WorkingDir = workDir;
                                    Version = config.Version;
                                    Dependencies = dependencies @ config.SpecialisedReferences name;
-                                   OutputPath = config.PackageOutputDirectory })
+                                   OutputPath = paths.PackageOutputPath })
                                
         Log "Created nuget package for " [name]
     
     type BuildForAllFrameworksArgs = 
         { ShouldBuildForFramework: FrameworkVersion -> string -> bool
-        ; Frameworks: FrameworkVersion seq
-        ; NugetExePath: string
-        ; BuildDir: string
-        ; SourceDir: string
-        ; PackagesDir: string}
+        ; Frameworks: FrameworkVersion seq}
     let defaultBuildForAllFrameworksArgs = 
-        { BuildDir = Defaults.buildPath; PackagesDir = Defaults.installedPackagesPath; SourceDir = Defaults.sourcesPath
-        ; NugetExePath = Defaults.nugetExePath; ShouldBuildForFramework = Defaults.shouldBuildForProject; Frameworks = Defaults.frameworksToBuild }
-    let buildForAllFrameworks (callback: BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs) nugetableProjects =
+        { ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
+        ; Frameworks = LeelooDefaults.frameworksToBuild }
+
+    let buildForAllFrameworks (paths: LeelooPaths) (callback: BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs) nugetableProjects =
         let config = callback defaultBuildForAllFrameworksArgs
 
         let createCopyOfSource projectName = 
-            let sourceDir = config.SourceDir @@ projectName
-            let buildDir  = config.BuildDir  @@ projectName
+            let sourceDir = paths.SourcesPath @@ projectName
+            let buildDir  = paths.BuildPath   @@ projectName
+
+            let sourceDi = new DirectoryInfo(sourceDir)
+            let destDi   = new DirectoryInfo(buildDir)
+
+            sprintf "Copying %s to %s" sourceDi.FullName destDi.FullName |> Log <| []
 
             sourceDir |> CopyDir buildDir <| konst true
 
@@ -147,47 +130,37 @@ module Multipass =
                                |> buildFrameworkVersion
 
             let definedFrameworkVersions = 
-                FrameworkVersion.VersionsBelow framework
+                framework.VersionsBelow
                 |> Seq.map (fun v -> v.ToNugetPath.ToUpperInvariant())
                 |> String.concat ";"
 
             let setFrameworkVersionForProject (projectName: string) =
                 let message = "Updating project file " + projectName + " to use " + framework.ToFrameworkVersionFlag
                 Log message []
-                let csproj = config.BuildDir @@ projectName @@ projectName + ".csproj"
+                let csproj = paths.BuildPath @@ projectName @@ projectName + ".csproj"
 
                 let fileContents = File.ReadAllText csproj
                 let updatedContents = regex.Replace(fileContents, targetFramework)
 
                 File.WriteAllText(csproj, updatedContents)
 
-//            let runNugetUpdate (projectName: string) =
-//                
-//                let packageRepo = PackageRepositoryFactory.Default.CreateRepository "https://packages.nuget.org/api/v2"
-//                let packagePathResolver = new DefaultPackagePathResolver(config.PackagesDir)
-//                let projectSystem = new MSBuildProjectSystem(projectName @@ projectName + ".csproj") :> IProjectSystem
-//                let localRepo = PackageRepositoryFactory.Default.CreateRepository config.PackagesDir
-//                let projectManager = new ProjectManager(packageRepo, packagePathResolver, projectSystem, localRepo)
-//
-//                let bouncePackage = projectManager.RemovePackageReference ->> projectManager.AddPackageReference 
-//
-//                projectManager.LocalRepository.GetPackages()
-//                |> Seq.filter projectManager.IsInstalled 
-//                |> Seq.map (fun package -> printfn "Bouncing %s" package.Id ; package.Id)
-//                |> Seq.iter bouncePackage
+            let runNugetUpdate (projectName: string) =
+                let packagesConfig = paths.BuildPath @@ projectName @@ "packages.config"
+                let projectFile    = paths.BuildPath @@ projectName @@ projectName + ".csproj"
+                NugetHelper.runNugetUpdate paths.PackagesPath packagesConfig projectFile
 
             Log "Building for " [|framework.ToFrameworkVersionFlag|]
 
             nugetableProjects 
             |> Seq.iter setFrameworkVersionForProject
 
-//            nugetableProjects
-//            |> Seq.iter runNugetUpdate
+            nugetableProjects
+            |> Seq.iter runNugetUpdate
 
             nugetableProjects
             |> Seq.iter (fun projectName ->
-                let buildDir = config.BuildDir @@ projectName
-                let csproj = buildDir          @@ projectName + ".csproj"
+                let buildDir = paths.BuildPath @@ projectName
+                let csproj   = buildDir        @@ projectName + ".csproj"
                 let buildDir = buildDir        @@ framework.ToNugetPath
 
                 let flags = ["DefineConstants", definedFrameworkVersions]
