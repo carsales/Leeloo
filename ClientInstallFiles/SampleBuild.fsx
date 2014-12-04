@@ -92,7 +92,7 @@ let shouldBuildForFramework (version: FrameworkVersion) (project: string) =
 
 
 Target "Clean" (fun _ -> 
-    Multipass.artefactDirectories paths @ [ testDir ]
+    testDir :: Multipass.artefactDirectories paths
     |> List.iter CleanDir)
 
 Target "UpdateSolutionInfo" (fun _ -> 
