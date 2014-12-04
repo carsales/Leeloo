@@ -1,23 +1,9 @@
-﻿namespace Leeloo
+﻿namespace Leeloo        
 
 module NugetHelper =
     open NuGet
-    open Fake
-    open System.Linq
-    open System.Xml.Linq
-    
-    let ns = XNamespace.op_Implicit "http://schemas.microsoft.com/developer/msbuild/2003"
-    let xn = XName.op_Implicit
-
-    let frameworkVersion (projectDoc: XDocument) =
-        projectDoc.Descendants(ns + "TargetFrameworkVersion").First().Value 
-        |> FrameworkVersion.ParseTargetFramework
-        |> Option.get
-
-    let findReference (doc: XDocument) packageName =
-        let includesPackageName (name: string) (elem: XElement) =
-            elem.Attribute(xn "Include").Value.ToUpperInvariant().Contains(name.ToUpperInvariant()) 
-        doc.Descendants(ns + "Reference").First(fun elem -> includesPackageName packageName elem)
+    open Fake    
+    open CsProjHelper
                 
     let versionsAvailable (package: IPackage) = 
         let mkVersionString (reference: IPackageAssemblyReference) =
@@ -34,7 +20,7 @@ module NugetHelper =
         let localRepo = new LocalPackageRepository(packageDir)
         
         try                
-            let doc = XDocument.Load(projectFile)
+            let doc = CsProjHelper.loadProj projectFile
 
             let dependencies = 
                 getDependencies packagesConfig
@@ -43,31 +29,21 @@ module NugetHelper =
             let projectVersion = frameworkVersion doc
 
             dependencies |> List.iter (fun package ->
-                printfn "Updating %A" package
-
                 let packageVersions = versionsAvailable package
-                
-                printfn "Available versions: %A" packageVersions
 
                 let lowestVersion = 
                     packageVersions 
                     |> Seq.filter (fun (_, version) -> version <= projectVersion) 
                     |> Seq.last
 
-                printfn "Will use %A as project is %A" lowestVersion projectVersion
-                    
-                let reference = findReference doc package.Id
-
-                let hintPath = reference.Element(ns + "HintPath")
-                printfn "Path %A" hintPath.Value
+                let reference, hintPath = findReference doc package.Id
 
                 let packageVersionString = package.Version.ToString()
                 let packageRef = fst lowestVersion
                 let updatedPath = localRepo.Source @@ package.Id + "." + packageVersionString @@ packageRef.Path
+                
+                sprintf "Updating reference to %s to use %s" reference updatedPath |> Log <| []
 
-                printfn "Will update reference to %A" updatedPath
-
-                printfn "Updating %A" reference
                 hintPath.SetValue updatedPath)
 
             doc.Save projectFile

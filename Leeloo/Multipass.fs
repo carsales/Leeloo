@@ -1,62 +1,83 @@
 ﻿namespace Leeloo
 
+/// Module to handle do multiframework builds and nuget packaging of csprojs
 module Multipass =
     open Fake
     open Leeloo
-    open FsFs
     open System.IO
     open System.Text.RegularExpressions
+    open MultipassTypes
+
+    let private targetFrameworkCsprojRegex = new Regex("<TargetFrameworkVersion>[^<]+</TargetFrameworkVersion>", RegexOptions.Compiled)    
     
+    /// Directories that are appropriate to clean out
     let artefactDirectories (paths: LeelooPaths) = [ 
         paths.BuildPath
         paths.PackagingWorkPath
         paths.PackageOutputPath ]
+        
+    /// Copies all directories from the source path (e.g. "src") to the leeloo build path (e.g. "leeloo/build")
+    let copySourcesToBuild (paths: LeelooPaths) = paths.SourcesPath |> CopyDir paths.BuildPath <| konst true
 
-    let packages packagesDir = 
-        (Dirs.ofString packagesDir) <**> PackageInfo.FromDirectory 
-        |> onlySome
-        |> Seq.filter (fun pi -> pi.Frameworks |> List.isEmpty |> not)
-        |> Seq.toList
+    let projectAndProjectReferences (paths: LeelooPaths) (projectName: string) =
+        let projectFile = paths.BuildPath @@ projectName @@ projectName + ".csproj"
 
-    type NugetableProjectsArg       = { IsExcludedProject : string -> bool }        
-    let defaultNugetableProjectsArg = { IsExcludedProject = LeelooDefaults.isExcludedProject; }
+        let transitiveProjectReferences = 
+            CsProjHelper.loadProj projectFile 
+            |> CsProjHelper.projectReferences 
+            |> Seq.toList
+            
+        sprintf "Transitive references for %s: " projectFile |> Log <| transitiveProjectReferences 
+        projectName::transitiveProjectReferences
+     
+    /// XML pokes the project file to set nuget framework versions for csprojs in projectsToBuild
+    let buildNugetableProjectsForFramework (paths: LeelooPaths) projectsToBuild (framework: FrameworkVersion) =
 
-    let nugetableProjects (paths: LeelooPaths) (callback: NugetableProjectsArg -> NugetableProjectsArg) (interfaceProjectName: string) = 
-        let testProj (name: string) = name.Contains "Tests"
-    
-        let config = callback <| defaultNugetableProjectsArg
+        let targetFramework = "<TargetFrameworkVersion>" + framework.ToFrameworkVersionFlag + "</TargetFrameworkVersion>"
+        
+        let setFrameworkVersionForProject (projectName: string) =
+            "Updating project file " + projectName + " to use " + framework.ToFrameworkVersionFlag
+            |> Log <| []
 
-        let isChild (name: string) 
-            = [testProj; config.IsExcludedProject] 
-           |> Seq.map    (fun f -> not << f)
-           |> Seq.forall (fun f -> f name)
+            let csproj = paths.BuildPath @@ projectName @@ projectName + ".csproj"
+            
+            let fileContents = File.ReadAllText csproj
+            let updatedContents = targetFrameworkCsprojRegex.Replace(fileContents, targetFramework)
+            File.WriteAllText(csproj, updatedContents)
 
-        let projectPattern = paths.SourcesPath @@ interfaceProjectName + ".*/"
+        let runNugetUpdate (projectName: string) =
+            let packagesConfig = paths.BuildPath @@ projectName @@ "packages.config"
+            let projectFile    = paths.BuildPath @@ projectName @@ projectName + ".csproj"
 
-        let projects = !! projectPattern
-                       |> Seq.filter isChild   
-                       |> Seq.map (fun dir -> (directoryInfo dir).Name)
-                       |> Seq.toList
+            projectFile |> NugetHelper.runNugetUpdate paths.PackagesPath packagesConfig
 
-        trace << (+) "Will build packages: " 
-              << String.concat "; " 
-              <| projects
+        Log "Building for " [|framework.ToFrameworkVersionFlag|]
 
-        projects
+        let projectsToUpdate = projectsToBuild 
+                               |> Seq.collect (projectAndProjectReferences paths) 
+                               |> Seq.distinct 
+                               |> Seq.toList
 
-    type CreateNugetForProjectArgs = 
-        { Version: string
-        ; NuspecTemplatePath: string
-        ; FrameworksToBuild: FrameworkVersion seq
-        ; ShouldBuildForFramework: FrameworkVersion -> string -> bool
-        ; SpecialisedReferences: string -> (string * string) list }
-    let defaultCreateNugetForProjectArgs =
-        { Version = "0.0.1"; NuspecTemplatePath = ""
-        ; FrameworksToBuild = [V451]
-        ; ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
-        ; SpecialisedReferences = konst [] }
+        projectsToUpdate |> Seq.iter setFrameworkVersionForProject
+        projectsToUpdate |> Seq.iter runNugetUpdate
 
-    let createNugetForProject (paths: LeelooPaths) (callback: CreateNugetForProjectArgs -> CreateNugetForProjectArgs) (name : string) = 
+        projectsToBuild |> Seq.iter (fun projectName ->
+
+            let buildDir = paths.BuildPath @@ projectName
+            let csproj   = buildDir        @@ projectName + ".csproj"
+            let buildDir = buildDir        @@ framework.ToNugetPath
+
+            let flags = ["DefineConstants", framework.VersionsBelowThisOne
+                                            |> Seq.map (fun v -> v.ToNugetPath.ToUpperInvariant())
+                                            |> String.concat ";" 
+                        ]
+
+            !! csproj 
+            |> MSBuildReleaseExt buildDir flags "Build"
+            |> Log "Built ")
+
+    /// Creates a nuget package for the specified project
+    let createNugetForProject (paths: LeelooPaths) (callback: CreateNugetCallback) (name : string) = 
         let config = callback defaultCreateNugetForProjectArgs
 
         let workDir = paths.PackagingWorkPath @@ name
@@ -83,9 +104,17 @@ module Multipass =
                 let frameworkVersionName = frameworkVersion.ToNugetPath
                 let outputDir = libDir @@ frameworkVersionName
 
-                !! (paths.BuildPath @@ name @@ frameworkVersionName @@ name + ".dll") 
-                ++ (paths.BuildPath @@ name @@ frameworkVersionName @@ name + ".pdb") 
-                |> CopyTo outputDir)
+                let outputPath = paths.BuildPath @@ name @@ frameworkVersionName
+
+                !! (outputPath @@ name + ".dll") 
+                ++ (outputPath @@ name + ".pdb")
+                |> CopyTo outputDir
+                
+                (* Copy all additional files *)
+                config.IncludeOutputFromProjectsNamed |> Seq.iter (fun fileName -> 
+                    !! (outputPath @@ fileName + ".dll")
+                    ++ (outputPath @@ fileName + ".pdb")
+                    |> CopyTo outputDir))
 
         nuspecFile |> NuGet (fun p -> 
                           { p with Project = name;
@@ -95,78 +124,17 @@ module Multipass =
                                    OutputPath = paths.PackageOutputPath })
                                
         Log "Created nuget package for " [name]
-    
-    type BuildForAllFrameworksArgs = 
-        { ShouldBuildForFramework: FrameworkVersion -> string -> bool
-        ; Frameworks: FrameworkVersion seq}
-    let defaultBuildForAllFrameworksArgs = 
-        { ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
-        ; Frameworks = LeelooDefaults.frameworksToBuild }
 
-    let buildForAllFrameworks (paths: LeelooPaths) (callback: BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs) nugetableProjects =
+    /// One function to copy them all in and in that directory build them
+    let copyAndBuildForAllFrameworks (paths: LeelooPaths) (callback: BuildForAllCallback) nugetableProjects =
         let config = callback defaultBuildForAllFrameworksArgs
 
-        let createCopyOfSource projectName = 
-            let sourceDir = paths.SourcesPath @@ projectName
-            let buildDir  = paths.BuildPath   @@ projectName
+        copySourcesToBuild paths
 
-            let sourceDi = new DirectoryInfo(sourceDir)
-            let destDi   = new DirectoryInfo(buildDir)
+        let projectsToBuild projects framework = config.ShouldBuildForFramework framework |> flip Seq.filter projects 
 
-            sprintf "Copying %s to %s" sourceDi.FullName destDi.FullName |> Log <| []
+        let (>>=) f g a = g (f a) a
+        let runner = projectsToBuild nugetableProjects >>= buildNugetableProjectsForFramework paths
 
-            sourceDir |> CopyDir buildDir <| konst true
-
-        nugetableProjects |> Seq.iter createCopyOfSource
-    
-        let buildFrameworkVersion (s: string) = 
-            "<TargetFrameworkVersion>" + s + "</TargetFrameworkVersion>"
-        let regex = new Regex(buildFrameworkVersion "[^<]+")
-        
-        config.Frameworks |> Seq.iter (fun (framework: FrameworkVersion) ->
-            let nugetableProjects = nugetableProjects |> Seq.filter (config.ShouldBuildForFramework framework)
-
-            let targetFramework = framework.ToFrameworkVersionFlag 
-                               |> buildFrameworkVersion
-
-            let definedFrameworkVersions = 
-                framework.VersionsBelow
-                |> Seq.map (fun v -> v.ToNugetPath.ToUpperInvariant())
-                |> String.concat ";"
-
-            let setFrameworkVersionForProject (projectName: string) =
-                let message = "Updating project file " + projectName + " to use " + framework.ToFrameworkVersionFlag
-                Log message []
-                let csproj = paths.BuildPath @@ projectName @@ projectName + ".csproj"
-
-                let fileContents = File.ReadAllText csproj
-                let updatedContents = regex.Replace(fileContents, targetFramework)
-
-                File.WriteAllText(csproj, updatedContents)
-
-            let runNugetUpdate (projectName: string) =
-                let packagesConfig = paths.BuildPath @@ projectName @@ "packages.config"
-                let projectFile    = paths.BuildPath @@ projectName @@ projectName + ".csproj"
-                NugetHelper.runNugetUpdate paths.PackagesPath packagesConfig projectFile
-
-            Log "Building for " [|framework.ToFrameworkVersionFlag|]
-
-            nugetableProjects 
-            |> Seq.iter setFrameworkVersionForProject
-
-            nugetableProjects
-            |> Seq.iter runNugetUpdate
-
-            nugetableProjects
-            |> Seq.iter (fun projectName ->
-                let buildDir = paths.BuildPath @@ projectName
-                let csproj   = buildDir        @@ projectName + ".csproj"
-                let buildDir = buildDir        @@ framework.ToNugetPath
-
-                let flags = ["DefineConstants", definedFrameworkVersions]
-
-                !! csproj 
-                |> MSBuildReleaseExt buildDir flags "Build"
-                |> Log "Built ")
-        )    
+        config.Frameworks |> Seq.iter runner
 

@@ -2,7 +2,7 @@
         
 type FrameworkVersion = V2 | V35 | V4 | V45 | V451
     with 
-        member x.VersionsBelow = 
+        member x.VersionsBelowThisOne = 
             match x with
             | V2   -> [V2]
             | V35  -> [V2; V35]

@@ -51,12 +51,15 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Util.fs" />
-    <Compile Include="FsFs.fs" />
     <Compile Include="FrameworkVersion.fs" />
+    <Compile Include="FsFs.fs" />
     <Compile Include="PackageInfo.fs" />
+    <Compile Include="CsProjHelper.fs" />
     <Compile Include="NugetHelper.fs" />
     <Compile Include="LeelooDefaults.fs" />
     <Compile Include="LeelooPaths.fs" />
+    <Compile Include="MultipassTypes.fs" />
+    <Compile Include="InterfaceAndTechnologyPattern.fs" />
     <Compile Include="Multipass.fs" />
     <Content Include="packages.config" />
     <None Include="..\Build.fsx">
