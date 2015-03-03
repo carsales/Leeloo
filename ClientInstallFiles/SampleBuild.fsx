@@ -22,14 +22,13 @@ let paths = new LeelooPaths(new System.IO.DirectoryInfo(projectRoot))
 
 let buildFrameworks = [ V35 ; V451 ]
 
-let testDir = "./test/"
-
 (* Use this to override which projects are built for frameworks *)
 let shouldBuildForFramework (version: FrameworkVersion) (project: string) =
     match project, version with
 //    | "ProjectName", v -> v >= V35 (* Builds "ProjectName" for any framework above 3.5 *)
     | _ -> true
 
+(* ATTENTION: YOU MUST FOLLOW THE BELOW COMMENT *)
 (*
 
     You must also select (by uncommenting) one of the following options:
@@ -92,7 +91,7 @@ let shouldBuildForFramework (version: FrameworkVersion) (project: string) =
 
 
 Target "Clean" (fun _ -> 
-    testDir :: Multipass.artefactDirectories paths
+    Multipass.artefactDirectories paths
     |> List.iter CleanDir)
 
 Target "UpdateSolutionInfo" (fun _ -> 
@@ -106,21 +105,19 @@ Target "Build" (fun _ ->
                  Frameworks = buildFrameworks }))
 
 Target "BuildTests" (fun _ -> 
-    paths.SourcesPath |> CopyDir testDir <| konst true
-
-    let testProjects = testDir @@ "*.Tests" @@ "*.csproj"
+    let testProjects = !! (paths.SourcesPath @@ "*.Tests" @@ "*.csproj")
 
     !! testProjects
-    |> MSBuildRelease paths.BuildPath "Build"
+    |> MSBuildRelease paths.TestPath "Build"
     |> Log "Build tests ")
 
 Target "Test" (fun _ -> 
-    let testPattern = paths.BuildPath + "*.Tests.dll"
+    let testPattern = paths.TestPath @@ "*.Tests.dll"
 
     !! testPattern 
     |> NUnitParallel(fun p -> 
                         { p with DisableShadowCopy = true;
-                                 OutputFile = paths.BuildPath @@ "TestResults.xml" }))
+                                 OutputFile = paths.BasePath @@ "TestResults.xml" }))
 
 Target "Nuget" (fun _ -> 
     let packageBuilder = Multipass.createNugetForProject paths (fun a -> 
@@ -134,7 +131,7 @@ Target "Nuget" (fun _ ->
     nugetableProjects |> Seq.iter packageBuilder)
 
 Target "Default" (fun _ -> 
-    trace <| "Builtd complete.")
+    trace <| "Build complete.")
 
 "Clean" 
 ==> "UpdateSolutionInfo" 

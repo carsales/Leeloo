@@ -2,7 +2,7 @@
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-#r "packages/FAKE.3.9.9/tools/FakeLib.dll"
+#r "packages/FAKE.3.17.12/tools/FakeLib.dll"
 
 open Fake
 open Fake.AssemblyInfoFile 
@@ -12,7 +12,7 @@ let workDir = "./work"
 let srcDir = "Leeloo"
 let outputPath = "nupkgs"
 let toolsPath = workDir @@ "tools"
-let version = "0.9.9"
+let version = "1.0.1"
 
 let deployPath = "."
 //let deployPath = @"\\dev-web-01\Websites\nuget\Packages"
@@ -44,6 +44,9 @@ Target "Nuget" (fun _ ->
 
     !! ("packages/NuGet.CommandLine.*/tools/*") 
     |> CopyFiles toolsPath
+
+    !! ("packages/NUnit.Runners.2.6.4/tools/**")
+    |> CopyFiles (toolsPath @@ "NUnit")
 
     !! (buildDir @@ "*.*")
     |> CopyFiles toolsPath

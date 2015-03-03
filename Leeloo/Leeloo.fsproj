@@ -65,11 +65,11 @@
     <None Include="..\Build.fsx">
       <Link>Build.fsx</Link>
     </None>
-    <None Include="Script1.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FakeLib">
-      <HintPath>..\packages\FAKE.3.9.9\tools\FakeLib.dll</HintPath>
+      <HintPath>..\packages\FAKE.Lib.3.17.12\lib\net451\FakeLib.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.Microsoft.Signed.3.1.1.1\lib\net45\FSharp.Core.dll</HintPath>

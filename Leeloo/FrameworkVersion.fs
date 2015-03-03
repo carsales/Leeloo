@@ -40,6 +40,18 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
             | "net451-full" -> V451 |> Some
             | _ -> None
 
+        static member FromTargetFramework (framework: System.Runtime.Versioning.FrameworkName): FrameworkVersion Option =
+            match framework with 
+            | null -> None
+            | f -> 
+                match f.FullName with
+                | ".NETFramework,Version=v2.0"   -> V2   |> Some
+                | ".NETFramework,Version=v3.5"   -> V35  |> Some
+                | ".NETFramework,Version=v4.0"   -> V4   |> Some
+                | ".NETFramework,Version=v4.5"   -> V45  |> Some
+                | ".NETFramework,Version=v4.5.1" -> V451 |> Some
+                | _ -> None
+
         static member ParseTargetFramework (s: string): FrameworkVersion Option =
             match s.ToLowerInvariant() with
             | "v2.0"   -> V2   |> Some

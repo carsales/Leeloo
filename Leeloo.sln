@@ -24,6 +24,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ClientFiles", "ClientFiles"
 		ClientInstallFiles\SampleBuild.fsx = ClientInstallFiles\SampleBuild.fsx
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Leeloo.Tests", "Leeloo.Tests\Leeloo.Tests.fsproj", "{5A71F74E-181D-4B3B-A261-79715CDC10E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leeloo.TestProject", "Leeloo.TestProject\Leeloo.TestProject.csproj", "{D09435A3-C269-4B04-AE59-59554B500AFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +38,14 @@ Global
 		{19AB6F5A-34BE-48D5-93D1-43D63548CF0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19AB6F5A-34BE-48D5-93D1-43D63548CF0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19AB6F5A-34BE-48D5-93D1-43D63548CF0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A71F74E-181D-4B3B-A261-79715CDC10E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A71F74E-181D-4B3B-A261-79715CDC10E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A71F74E-181D-4B3B-A261-79715CDC10E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A71F74E-181D-4B3B-A261-79715CDC10E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D09435A3-C269-4B04-AE59-59554B500AFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D09435A3-C269-4B04-AE59-59554B500AFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D09435A3-C269-4B04-AE59-59554B500AFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D09435A3-C269-4B04-AE59-59554B500AFB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

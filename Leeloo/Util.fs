@@ -1,7 +1,10 @@
 ﻿namespace Leeloo
 
 [<AutoOpen>]
-module Util =    
+module Util =  
+  
+    open System
+
     type OptionBuilder() =
         member x.Bind(v,f) = Option.bind f v
         member x.Return v = Some v
@@ -26,3 +29,20 @@ module Util =
     let (->>) f g a =
         f a |> ignore
         g a
+
+    type String with 
+        static member ofChars (cs: seq<char>) = new String(cs |> Seq.toArray)
+        static member toUpper (s: string) = s.ToUpperInvariant()
+
+    module Option =
+        let noneIfNull = function
+            | null -> None
+            | a    -> Some a
+        let otherwise<'a> (f: unit -> 'a) (a: 'a option): 'a =
+            match a with
+            | Some a -> a
+            | None   -> f()
+        let ofSeq<'a> (xs: seq<'a>) =
+            let enum = xs.GetEnumerator()
+            if enum.MoveNext() then Some(enum.Current)
+            else None

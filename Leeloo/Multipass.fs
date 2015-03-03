@@ -14,7 +14,8 @@ module Multipass =
     let artefactDirectories (paths: LeelooPaths) = [ 
         paths.BuildPath
         paths.PackagingWorkPath
-        paths.PackageOutputPath ]
+        paths.PackageOutputPath
+        paths.TestPath ]
         
     /// Copies all directories from the source path (e.g. "src") to the leeloo build path (e.g. "leeloo/build")
     let copySourcesToBuild (paths: LeelooPaths) = paths.SourcesPath |> CopyDir paths.BuildPath <| konst true

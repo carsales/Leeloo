@@ -5,6 +5,9 @@ module LeelooDefaults =
     let installedPackagesPath = "packages"
 
     let buildPath             = "leeloo/build"
+
+    let testPath              = "leeloo/test"
+
     let packagingWorkPath     = "leeloo/work"
     let packageOutputPath     = "leeloo/nupkgs"
 
