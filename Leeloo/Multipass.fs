@@ -70,7 +70,7 @@ module Multipass =
 
             let flags = ["DefineConstants", framework.VersionsBelowThisOne
                                             |> Seq.map (fun v -> v.ToNugetPath.ToUpperInvariant())
-                                            |> String.concat ";" 
+                                            |> String.concat ";"
                         ]
 
             !! csproj 

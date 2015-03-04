@@ -117,7 +117,8 @@ Target "Test" (fun _ ->
     !! testPattern 
     |> NUnitParallel(fun p -> 
                         { p with DisableShadowCopy = true;
-                                 OutputFile = paths.BasePath @@ "TestResults.xml" }))
+                                 OutputFile = paths.BasePath @@ "TestResults.xml"
+                                 TimeOut = TimeSpan.FromMinutes 5. }))
 
 Target "Nuget" (fun _ -> 
     let packageBuilder = Multipass.createNugetForProject paths (fun a -> 
