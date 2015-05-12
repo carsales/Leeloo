@@ -8,6 +8,7 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #r "FakeLib.dll"
 #r "Leeloo.dll"
 
+open System
 open Fake
 open Fake.AssemblyInfoFile
 open Leeloo
@@ -78,9 +79,10 @@ let shouldBuildForFramework (version: FrameworkVersion) (project: string) =
 //let nugetableProjects = interfaceProjectName |> InterfaceAndTechnologyPattern.projectsByConvention paths id
 //
 //(* Use this to include dlls and pdbs from base libraries, e.g. a business or infrastructure layer. *)
-//let additionalBuildArtefacts = [
+//let additionalBuildArtefacts = 
+//    [
 ////    "SomeSharedLibrary" (* Will include the SomeSharedLibrary.dll and SomeSharedLibrary.pdb in the lib directory for the nuget package *)
-//]
+//    ]
 //
 //(* This sets the interface as a nuget dependency for everything other than the interface itself *)
 //let specialisedRefs: MultipassTypes.SpecialisedReferencesMap = 
@@ -95,7 +97,7 @@ Target "Clean" (fun _ ->
     |> List.iter CleanDir)
 
 Target "UpdateSolutionInfo" (fun _ -> 
-    let pathToSolutionInfo = paths.BuildPath @@ "SolutionInfo.cs"
+    let pathToSolutionInfo = paths.SourcesPath @@ "SolutionInfo.cs"
     CreateCSharpAssemblyInfo pathToSolutionInfo
         [ Attribute.Version version; Attribute.FileVersion version ])
 
@@ -105,7 +107,7 @@ Target "Build" (fun _ ->
                  Frameworks = buildFrameworks }))
 
 Target "BuildTests" (fun _ -> 
-    let testProjects = !! (paths.SourcesPath @@ "*.Tests" @@ "*.csproj")
+    let testProjects = paths.SourcesPath @@ "*.Tests" @@ "*.csproj"
 
     !! testProjects
     |> MSBuildRelease paths.TestPath "Build"
