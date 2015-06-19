@@ -10,6 +10,7 @@ module Paths =
             then new System.Exception(sprintf "Project root %s does not exist" projectRoot.FullName) |> raise        
     
         member val BasePath          = projectRoot.FullName                                           with get, set
+        member val CopiedPackages    = projectRoot.FullName @@ LeelooDefaults.copiedPackagesPath      with get, set
         member val SourcesPath       = projectRoot.FullName @@ LeelooDefaults.sourcesPath             with get, set
         member val PackagesPath      = projectRoot.FullName @@ LeelooDefaults.installedPackagesPath   with get, set
         member val BuildPath         = projectRoot.FullName @@ LeelooDefaults.buildPath               with get, set

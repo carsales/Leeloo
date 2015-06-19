@@ -53,6 +53,7 @@
     <Compile Include="NugetHelperTests.fs" />
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
+    <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Web.XmlTransform">
@@ -64,10 +65,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="NuGet">
-      <HintPath>..\packages\NuGet.CommandLine.2.8.3\tools\NuGet.exe</HintPath>
+      <HintPath>..\packages\NuGet.CommandLine.2.8.5\tools\NuGet.exe</HintPath>
     </Reference>
     <Reference Include="NuGet.Core">
-      <HintPath>..\packages\Nuget.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
+      <HintPath>..\packages\NuGet.Core.2.8.5\lib\net40-Client\NuGet.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="nunit.framework">

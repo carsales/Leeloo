@@ -15,10 +15,14 @@ module Multipass =
         paths.BuildPath
         paths.PackagingWorkPath
         paths.PackageOutputPath
-        paths.TestPath ]
+        paths.TestPath 
+        paths.CopiedPackages ]
         
     /// Copies all directories from the source path (e.g. "src") to the leeloo build path (e.g. "leeloo/build")
     let copySourcesToBuild (paths: LeelooPaths) = paths.SourcesPath |> CopyDir paths.BuildPath <| konst true
+
+    /// Copies over packages for use during build
+    let copyPackages (paths: LeelooPaths) = paths.PackagesPath |> CopyDir paths.CopiedPackages <| konst true
 
     let projectAndProjectReferences (paths: LeelooPaths) (projectName: string) =
         let projectFile = paths.BuildPath @@ projectName @@ projectName + ".csproj"
@@ -130,6 +134,7 @@ module Multipass =
     let copyAndBuildForAllFrameworks (paths: LeelooPaths) (callback: BuildForAllCallback) nugetableProjects =
         let config = callback defaultBuildForAllFrameworksArgs
 
+        copyPackages paths
         copySourcesToBuild paths
 
         let projectsToBuild projects framework = config.ShouldBuildForFramework framework |> flip Seq.filter projects 
