@@ -2,7 +2,7 @@
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-#r "packages/FAKE.3.35.1/tools/FakeLib.dll"
+#r "packages/FAKE.4.4.6/tools/FakeLib.dll"
 
 open Fake
 open Fake.AssemblyInfoFile 
@@ -12,7 +12,7 @@ let workDir = "./work"
 let srcDir = "Leeloo"
 let outputPath = "nupkgs"
 let toolsPath = workDir @@ "tools"
-let version = "1.0.7"
+let version = "1.1.0"
 
 let deployPath = "."
 //let deployPath = @"\\dev-web-01\Websites\nuget\Packages"

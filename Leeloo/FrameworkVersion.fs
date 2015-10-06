@@ -1,6 +1,6 @@
 ﻿namespace Leeloo
         
-type FrameworkVersion = V2 | V35 | V4 | V45 | V451
+type FrameworkVersion = V2 | V35 | V4 | V45 | V451 | V452 | V46
     with 
         member x.VersionsBelowThisOne = 
             match x with
@@ -9,6 +9,8 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
             | V4   -> [V2; V35; V4]
             | V45  -> [V2; V35; V4; V45]
             | V451 -> [V2; V35; V4; V45; V451]
+            | V452 -> [V2; V35; V4; V45; V451; V451]
+            | V46  -> [V2; V35; V4; V45; V451; V451; V452]
 
         member x.ToFrameworkVersionFlag = 
             match x with
@@ -17,6 +19,8 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
             | V4   -> "v4.0"
             | V45  -> "v4.5"
             | V451 -> "v4.5.1"
+            | V452 -> "v4.5.2"
+            | V46  -> "v4.6"
 
         member x.ToNugetPath = 
             match x with
@@ -25,6 +29,8 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
             | V4   -> "net40"
             | V45  -> "net45"
             | V451 -> "net451"
+            | V452 -> "net452"
+            | V46  -> "net46"
 
         static member ParseNugetPath (s: string): FrameworkVersion Option =
             match s.ToLowerInvariant() with
@@ -38,6 +44,10 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
             | "net45-full"  -> V45  |> Some
             | "net451"      -> V451 |> Some
             | "net451-full" -> V451 |> Some
+            | "net452"      -> V452 |> Some
+            | "net452-full" -> V452 |> Some
+            | "net46"       -> V46  |> Some
+            | "net46-full"  -> V46  |> Some
             | _ -> None
 
         static member FromTargetFramework (framework: System.Runtime.Versioning.FrameworkName): FrameworkVersion Option =
@@ -50,6 +60,8 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
                 | ".NETFramework,Version=v4.0"   -> V4   |> Some
                 | ".NETFramework,Version=v4.5"   -> V45  |> Some
                 | ".NETFramework,Version=v4.5.1" -> V451 |> Some
+                | ".NETFramework,Version=v4.5.2" -> V452 |> Some
+                | ".NETFramework,Version=v4.6"   -> V46  |> Some
                 | _ -> None
 
         static member ParseTargetFramework (s: string): FrameworkVersion Option =
@@ -59,6 +71,8 @@ type FrameworkVersion = V2 | V35 | V4 | V45 | V451
             | "v4.0"   -> V4   |> Some
             | "v4.5"   -> V45  |> Some
             | "v4.5.1" -> V451 |> Some
+            | "v4.5.2" -> V452 |> Some
+            | "v4.6"   -> V46  |> Some
             | _ -> None
     end
 
