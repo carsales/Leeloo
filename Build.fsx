@@ -12,7 +12,12 @@ let workDir = "./work"
 let srcDir = "Leeloo"
 let outputPath = "nupkgs"
 let toolsPath = workDir @@ "tools"
-let version = "1.1.0"
+
+let version =
+    let major = environVarOrDefault "LEELOO_MAJORVERSION" "1"
+    let minor = environVarOrDefault "LEELOO_MINORVERSION" "1"    
+    let build = environVarOrDefault "LEELOO_BUILDNUMBER"  "0"
+    sprintf "%s.%s.%s" major minor build
 
 let deployPath = "."
 //let deployPath = @"\\dev-web-01\Websites\nuget\Packages"
