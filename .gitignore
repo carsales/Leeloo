@@ -32,3 +32,4 @@ work/
 !packages/**
 Fake.Multitargeting.*.nupkg
 Leeloo.*.nupkg
+.fake/
