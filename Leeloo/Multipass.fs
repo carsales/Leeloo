@@ -82,13 +82,13 @@ module Multipass =
             |> Log "Built ")
 
     /// Creates a nuget package for the specified project
-    let createNugetForProject (paths: LeelooPaths) (callback: CreateNugetCallback) (name : string) = 
-        let config = callback defaultCreateNugetForProjectArgs
+    let createNugetForProject (paths: LeelooPaths) (createNuget: CreateNugetCallback) (name : string) = 
+        let config = createNuget defaultCreateNugetForProjectArgs
 
         let workDir = paths.PackagingWorkPath @@ name
 
         CleanDir workDir
-
+        
         let libDir = workDir @@ "lib"
         let nuspecFile = config.NuspecTemplatePath
 
@@ -96,13 +96,14 @@ module Multipass =
             let fileName = paths.BuildPath @@ name @@ "packages.config" 
 
             if fileExists fileName 
-            then getDependencies fileName
-            else []
+            then getDependencies fileName @ config.SpecialisedReferences name
+            else config.SpecialisedReferences name
+         |> List.map (fun (packageName, packageVersion) -> (packageName, config.DependencyCallback packageName packageVersion))
 
         dependencies
         |> Seq.map (fun (x, y) -> x + " v" + y)
         |> Log "Found deps: "
-
+        
         config.FrameworksToBuild |> Seq.iter (fun (frameworkVersion: FrameworkVersion) -> 
             if config.ShouldBuildForFramework frameworkVersion name
             then 
@@ -125,7 +126,7 @@ module Multipass =
                           { p with Project = name;
                                    WorkingDir = workDir;
                                    Version = config.Version;
-                                   Dependencies = dependencies @ config.SpecialisedReferences name;
+                                   Dependencies = dependencies;
                                    OutputPath = paths.PackageOutputPath })
                                
         Log "Created nuget package for " [name]

@@ -11,11 +11,15 @@ module MultipassTypes =
         ; IncludeOutputFromProjectsNamed: string seq
         ; FrameworksToBuild: FrameworkVersion seq
         ; ShouldBuildForFramework: BuildForFrameworkPredicate
-        ; SpecialisedReferences: SpecialisedReferencesMap }
+        ; SpecialisedReferences: SpecialisedReferencesMap
+        ; DependencyCallback: DependenciesCallback }
 
     and BuildForAllFrameworksArgs = 
         { ShouldBuildForFramework: BuildForFrameworkPredicate
         ; Frameworks: FrameworkVersion seq }
+
+    and PackageName = string
+    and PackageVersion = string
 
     (* Functions provided to argument types given name *)
     and ExcludedProjectPredicate   = string -> bool
@@ -23,11 +27,11 @@ module MultipassTypes =
     and SpecialisedReferencesMap   = string -> (string * string) list
 
     (* Update callbacks *)
-    and NugetableCallback   = NugetableProjectsArg -> NugetableProjectsArg
-    and CreateNugetCallback = CreateNugetForProjectArgs -> CreateNugetForProjectArgs
-    and BuildForAllCallback = BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs
-    
-    
+    and NugetableCallback    = NugetableProjectsArg -> NugetableProjectsArg
+    and CreateNugetCallback  = CreateNugetForProjectArgs -> CreateNugetForProjectArgs
+    and BuildForAllCallback  = BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs
+    and DependenciesCallback = PackageName -> PackageVersion -> PackageVersion
+        
     (* Defaults *)
     let defaultNugetableProjectsArg = { IsExcludedProject = LeelooDefaults.isExcludedProject; }
 
@@ -36,7 +40,8 @@ module MultipassTypes =
         ; IncludeOutputFromProjectsNamed = []
         ; FrameworksToBuild = [V451]
         ; ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
-        ; SpecialisedReferences = konst [] }
+        ; SpecialisedReferences = konst [] 
+        ; DependencyCallback = flip konst }
 
     let defaultBuildForAllFrameworksArgs = 
         { ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
