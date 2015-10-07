@@ -98,7 +98,7 @@ module Multipass =
             if fileExists fileName 
             then getDependencies fileName @ config.SpecialisedReferences name
             else config.SpecialisedReferences name
-         |> List.map (fun (packageName, packageVersion) -> (packageName, config.DependencyCallback packageName packageVersion))
+         |> List.map (fun (packageName, packageVersion) -> (packageName, config.DependencyCallback name packageName packageVersion))
 
         dependencies
         |> Seq.map (fun (x, y) -> x + " v" + y)

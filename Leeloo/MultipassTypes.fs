@@ -1,5 +1,6 @@
 ﻿namespace Leeloo
 
+[<AutoOpen>]
 module MultipassTypes =
     (* Function argument types *)
     type NugetableProjectsArg     = 
@@ -20,6 +21,7 @@ module MultipassTypes =
 
     and PackageName = string
     and PackageVersion = string
+    and ProjectName = string
 
     (* Functions provided to argument types given name *)
     and ExcludedProjectPredicate   = string -> bool
@@ -30,7 +32,7 @@ module MultipassTypes =
     and NugetableCallback    = NugetableProjectsArg -> NugetableProjectsArg
     and CreateNugetCallback  = CreateNugetForProjectArgs -> CreateNugetForProjectArgs
     and BuildForAllCallback  = BuildForAllFrameworksArgs -> BuildForAllFrameworksArgs
-    and DependenciesCallback = PackageName -> PackageVersion -> PackageVersion
+    and DependenciesCallback = ProjectName -> PackageName -> PackageVersion -> PackageVersion
         
     (* Defaults *)
     let defaultNugetableProjectsArg = { IsExcludedProject = LeelooDefaults.isExcludedProject; }
@@ -41,7 +43,7 @@ module MultipassTypes =
         ; FrameworksToBuild = [V451]
         ; ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
         ; SpecialisedReferences = konst [] 
-        ; DependencyCallback = flip konst }
+        ; DependencyCallback = fun _ _ v -> v }
 
     let defaultBuildForAllFrameworksArgs = 
         { ShouldBuildForFramework = LeelooDefaults.shouldBuildForProject
