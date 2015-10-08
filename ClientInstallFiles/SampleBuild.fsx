@@ -13,8 +13,12 @@ open Fake
 open Fake.AssemblyInfoFile
 open Leeloo
 
-new System.Exception("Edit build.fsx to remove this line and configure your specifics") |> raise
-let version = "<Nuget version and SolutionInfo version>"
+let version =
+    let major = environVarOrDefault "LEELOO_MAJORVERSION" "0"
+    let minor = environVarOrDefault "LEELOO_MINORVERSION" "1"    
+    let build = environVarOrDefault "LEELOO_BUILDNUMBER"  "0"
+
+    sprintf "%s.%s.%s" major minor build
 
 let nuspecFileBase = "sample.nuspec"
 
@@ -117,10 +121,10 @@ Target "Test" (fun _ ->
     let testPattern = paths.TestPath @@ "*.Tests.dll"
 
     !! testPattern 
-    |> NUnitParallel(fun p -> 
-                        { p with DisableShadowCopy = true;
-                                 OutputFile = paths.BasePath @@ "TestResults.xml"
-                                 TimeOut = TimeSpan.FromMinutes 5. }))
+    |> NUnit(fun p -> 
+            { p with DisableShadowCopy = true;
+                        OutputFile = paths.BasePath @@ "TestResults.xml"
+                        TimeOut = TimeSpan.FromMinutes 5. }))
 
 Target "Nuget" (fun _ -> 
     let packageBuilder = Multipass.createNugetForProject paths (fun a -> 

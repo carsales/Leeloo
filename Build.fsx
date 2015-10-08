@@ -2,7 +2,7 @@
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-#r "packages/FAKE.4.4.6/tools/FakeLib.dll"
+#r "packages/FAKE.4.5.1/tools/FakeLib.dll"
 
 open Fake
 open Fake.AssemblyInfoFile 
@@ -66,7 +66,7 @@ Target "Nuget" (fun _ ->
                  Version    = version
                  WorkingDir = workDir
                  OutputPath = outputPath
-                 ToolPath   = "./packages/NuGet.CommandLine.2.8.5/tools/Nuget.exe" }))
+                 ToolPath   = "./packages/NuGet.CommandLine.2.8.6/tools/Nuget.exe" }))
 
 Target "Deploy" (fun _ ->
     !! (outputPath @@ "Leeloo." + version + ".*")
