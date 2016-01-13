@@ -25,7 +25,7 @@ let nuspecFileBase = "sample.nuspec"
 let projectRoot = ".."
 let paths = new LeelooPaths(new System.IO.DirectoryInfo(projectRoot))
 
-let buildFrameworks = [ V35 ; V451 ]
+let buildFrameworks = [ V35 ; V451 ; V461 ]
 
 (* Use this to override which projects are built for frameworks *)
 let shouldBuildForFramework (version: FrameworkVersion) (project: string) =
