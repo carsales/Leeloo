@@ -1,6 +1,6 @@
 ﻿namespace Leeloo
 
-module InterfaceAndTechnologyPattern =    
+module InterfaceAndTechnologyPattern =
     open MultipassTypes
     open Fake
 
@@ -18,7 +18,7 @@ module InterfaceAndTechnologyPattern =
         let projectPattern = paths.SourcesPath @@ interfaceProjectName + ".*/"
 
         let projects = !! projectPattern
-                       |> Seq.filter isChild   
+                       |> Seq.filter isChild
                        |> Seq.map (fun dir -> (directoryInfo dir).Name)
                        |> Seq.toList
 

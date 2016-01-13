@@ -2,7 +2,7 @@
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-#I "../packages/Leeloo.{{Version}}/tools/"
+#I "../tools/Leeloo/tools/"
 
 
 #r "FakeLib.dll"
