@@ -98,8 +98,15 @@ module Multipass =
             if fileExists fileName 
             then getDependencies fileName @ config.SpecialisedReferences name
             else config.SpecialisedReferences name
-         |> List.filter (fun(name, _) -> name <> "Leeloo")
-         |> List.map (fun (packageName, packageVersion) -> (packageName, config.DependencyCallback name packageName packageVersion))
+         |> Seq.filter (fun(name, _) -> name <> "Leeloo")
+         |> Seq.groupBy fst
+         |> Seq.map (fun (packageName, versions) -> 
+              let packageVersion = 
+                versions
+                |> Seq.map snd
+                |> Seq.max
+              in (packageName, config.DependencyCallback name packageName packageVersion))
+         |> Seq.toList
 
         dependencies
         |> Seq.map (fun (x, y) -> x + " v" + y)

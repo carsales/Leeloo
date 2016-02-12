@@ -33,12 +33,13 @@ type ``Run tests over nuget helper``() =
                                 |> Seq.map snd
                                 |> Seq.toList
 
-        Assert.That(availableVersions, Has.Length.EqualTo 4)
+        Assert.That(availableVersions, Has.Length.EqualTo 5)
 
         Assert.That(availableVersions, Contains.Item FrameworkVersion.V35)
         Assert.That(availableVersions, Contains.Item FrameworkVersion.V4)
         Assert.That(availableVersions, Contains.Item FrameworkVersion.V45)
         Assert.That(availableVersions, Contains.Item FrameworkVersion.V451)
+        Assert.That(availableVersions, Contains.Item FrameworkVersion.V46)
 
     [<Test>]
     member t.``Can find version of csn.logging for various versions``() =

@@ -26,7 +26,7 @@ type ``Run tests over csproj helper``() =
     [<Test>]
     member t.``Can load the framework version of the sample project``() =
         let version = frameworkVersion project
-        Assert.That(version, Is.EqualTo FrameworkVersion.V451)
+        Assert.That(version, Is.EqualTo FrameworkVersion.V46)
 
     [<Test>]
     member t.``Can find a reference to nunit in the sample project``() =
